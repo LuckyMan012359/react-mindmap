@@ -498,7 +498,7 @@ const MindMap = () => {
             top: `${contextMenu.y}px`,
             left: `${contextMenu.x}px`,
             backgroundColor: "white",
-            boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.1)",
+            boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.8)",
             borderRadius: "5px",
             zIndex: 10,
           }}

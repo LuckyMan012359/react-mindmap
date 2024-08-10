@@ -141,7 +141,7 @@ const CommandSidebar: React.FC = () => {
             top: `${contextMenu.y - 295}px`,
             left: `${contextMenu.x - 75}px`,
             backgroundColor: "white",
-            boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.1)",
+            boxShadow: "0px 0px 10px rgba(0, 0, 0, 0.8)",
             borderRadius: "5px",
             zIndex: 10,
           }}
