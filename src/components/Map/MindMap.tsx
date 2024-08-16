@@ -375,12 +375,13 @@ const MindMap = () => {
   const handleCancel = () => {
     if (cancelTokenSource) {
       setShowLoading(false);
-      cancelTokenSource.cancel("Request canceled by user.");
       setIsShortcutPress(false);
+      cancelTokenSource.cancel("Request canceled by user.");
       notification.info({
         message: "Command is stopped",
       });
     } else {
+      setIsShortcutPress(false);
       setShowLoading(false);
     }
   };
@@ -389,8 +390,6 @@ const MindMap = () => {
     const handleThreadIdUpdate = (event: Event) => {
       const customEvent = event as CustomEvent;
       const { errorStatus } = customEvent.detail;
-      console.log(customEvent);
-
       if (errorStatus === 401) {
         notification.error({
           message: "Invalid OpenAI API key",
@@ -430,7 +429,6 @@ const MindMap = () => {
     const specialKeys = ["Shift", "Control", "Alt", "Meta", "Delete"];
 
     if (!specialKeys.includes(event.key)) {
-      setIsShortcutPress(false);
       if (!selectedNode) {
         message.error({
           content: "Please select node.",
