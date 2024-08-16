@@ -157,7 +157,7 @@ export default function CommandsGroup() {
               setOpenAIKey(e.target.value);
               setIsClient(true);
             }}
-            onPressEnter={setThreadID}
+            onBlur={setThreadID}
           />
         </div>
         <div className="w-[480px] flex justify-between items-center max-[650px]:flex-col max-[650px]:w-full max-[650px]:items-start max-[650px]:gap-3">

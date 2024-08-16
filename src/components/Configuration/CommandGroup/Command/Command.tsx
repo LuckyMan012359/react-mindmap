@@ -171,6 +171,8 @@ export default function Command({
     if (!isClient) {
       const storedRequest = getCommand(id);
 
+      console.log(storedRequest);
+
       const assistantID = getDefaultAssistantId();
       const defaultThreadID = getDefaultThreadId();
 
@@ -184,8 +186,16 @@ export default function Command({
         );
         setCommandName(storedRequest.commandName || "");
         setCommandShortcut(storedRequest.commandShortcut || "");
-        setAssistantId(assistantID || "");
-        setThreadId(defaultThreadID || "");
+        setAssistantId(
+          storedRequest.assistantId
+            ? storedRequest.assistantId
+            : assistantID || ""
+        );
+        setThreadId(
+          storedRequest.threadId
+            ? storedRequest.threadId
+            : defaultThreadID || ""
+        );
         setCommandsContent(storedRequest.commands || "");
         setSelectedValue(storedRequest.select || defaultValue);
       }

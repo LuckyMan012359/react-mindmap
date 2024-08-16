@@ -252,6 +252,7 @@ const MindMap = () => {
 
     setCurrentNode(selectedNode);
     setEditedContent(selectedNode.topic);
+    setIsShortcutPress(false);
     setEditModalVisible(true);
   };
 
@@ -374,8 +375,8 @@ const MindMap = () => {
   const handleCancel = () => {
     if (cancelTokenSource) {
       setShowLoading(false);
-      setIsShortcutPress(false);
       cancelTokenSource.cancel("Request canceled by user.");
+      setIsShortcutPress(false);
       notification.info({
         message: "Command is stopped",
       });
@@ -388,18 +389,25 @@ const MindMap = () => {
     const handleThreadIdUpdate = (event: Event) => {
       const customEvent = event as CustomEvent;
       const { errorStatus } = customEvent.detail;
+      console.log(customEvent);
 
       if (errorStatus === 401) {
         notification.error({
           message: "Invalid OpenAI API key",
         });
         setShowLoading(false);
-      } else if (errorStatus === 400) {
+      } else if (errorStatus === 402) {
         notification.error({
           message: "OpenAI API key is required",
         });
         setShowLoading(false);
+      } else if (errorStatus === 400) {
+        notification.error({
+          message: "Thread Id is required",
+        });
+        setShowLoading(false);
       }
+      setIsShortcutPress(false);
     };
 
     window.addEventListener(
@@ -422,11 +430,11 @@ const MindMap = () => {
     const specialKeys = ["Shift", "Control", "Alt", "Meta", "Delete"];
 
     if (!specialKeys.includes(event.key)) {
+      setIsShortcutPress(false);
       if (!selectedNode) {
         message.error({
           content: "Please select node.",
         });
-        setIsShortcutPress(false);
         return;
       }
       if (event.altKey && event.key) {
@@ -443,9 +451,15 @@ const MindMap = () => {
 
     const command = getCommandByShortcut(newShortcut);
 
-    console.log(command);
-
     if (command) {
+      console.log(command.command.commandShortcut);
+    }
+
+    if (
+      command &&
+      command.command.commandShortcut != "" &&
+      command.command.commandShortcut
+    ) {
       handleExecuteCommand(
         command.command.select,
         command.command.commandName,

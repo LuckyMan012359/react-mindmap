@@ -5,17 +5,13 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
-  const {
-    openAIKey,
-    defaultAssistantId,
-    prompt,
-    threadId,
-    nodes,
-    selectNode,
-  } = req.body;
+  const { openAIKey, defaultAssistantId, prompt, threadId, nodes, selectNode } =
+    req.body;
+
+  console.log(openAIKey);
 
   if (!openAIKey) {
-    return res.status(400).json({ error: "OpenAI API key is required" });
+    return res.status(402).json({ error: "OpenAI API key is required" });
   }
 
   const openai = new OpenAI({ apiKey: openAIKey });
@@ -76,6 +72,8 @@ async function checkStatus(openai, threadId, runId) {
       await new Promise((resolve) => setTimeout(resolve, 2000));
     }
   }
+
+  await new Promise((resolve) => setTimeout(resolve, 2000));
 }
 
 function normalizeResponse(messageContent) {

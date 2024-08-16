@@ -779,6 +779,8 @@ const useMindMapStore = create<MindMapState>((set) => ({
     nodeType: string,
     cancelToken: any
   ) => {
+    console.log(node);
+
     const mindMapData = localStorage.getItem("mindMapData");
 
     if (mindMapData) {
@@ -881,11 +883,20 @@ const useMindMapStore = create<MindMapState>((set) => ({
 
           if (brother) {
             for (let i = 0; i < data[0].data.length; i++) {
-              if (
-                data[0].data[i].parentid == node.parent.id &&
-                data[0].data[i].id != node.id
-              ) {
-                promptNodes.push(data[0].data[i]);
+              console.log(data[0].data[i].id);
+              console.log(node);
+
+              if (node.id != "root") {
+                if (
+                  data[0].data[i].parentid == node.parent.id &&
+                  data[0].data[i].id != node.id
+                ) {
+                  promptNodes.push(data[0].data[i]);
+                }
+              } else {
+                if (data[0].data[i].id != node.id) {
+                  promptNodes.push(data[0].data[i]);
+                }
               }
             }
           }
