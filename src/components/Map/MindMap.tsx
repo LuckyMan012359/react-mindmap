@@ -549,7 +549,7 @@ const MindMap = () => {
                 }}
                 className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
               >
-                {`Add ${value.commandName} node`}
+                {`Run ${value.commandName} command`}
               </li>
             ))}
           </ul>
