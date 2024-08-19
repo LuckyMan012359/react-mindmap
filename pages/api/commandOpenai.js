@@ -41,6 +41,9 @@ export default async function handler(req, res) {
     console.log(messageContent);
 
     const normalizedResponse = normalizeResponse(messageContent);
+
+    console.log(normalizedResponse);
+
     res.status(200).json({ message: normalizedResponse });
   } catch (error) {
     handleError(res, error);
@@ -78,7 +81,8 @@ async function checkStatus(openai, threadId, runId) {
 
 function normalizeResponse(messageContent) {
   const keys = Object.keys(messageContent);
-  if (messageContent.type) {
+
+  if (keys.length > 1) {
     const content = messageContent[keys[1]];
 
     return {
