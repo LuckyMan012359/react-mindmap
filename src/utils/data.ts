@@ -1,5 +1,5 @@
 import { message } from "antd";
-import { ImportedDataState } from "./type";
+import { ImportedDataState, mindMap } from "./type";
 
 export const ideas = ["Brother", "Parent"];
 export const defaultIdeasCheckedList = ["Brother", "Parent"];
@@ -57,30 +57,65 @@ export const loadFromMM = async (): Promise<File> => {
   });
 };
 
-export const restoreData = (dataState: ImportedDataState) => {
+
+// interface MindMap {
+//   projectName: string;
+//   // Add other properties of MindMap if needed
+// }
+
+export const restoreData = (dataState: ImportedDataState): boolean => {
   const storageData = localStorage.getItem("mindMapData");
+
   if (storageData) {
-    const mindData = JSON.parse(storageData);
+    const mindData: ImportedDataState[] = JSON.parse(storageData);
 
-    let count = 0;
+    let projectName = dataState.projectName;
 
-    for (let i = 0; i < mindData.length; i++) {
-      if (mindData[i].projectName === dataState.projectName) {
-        count++;
+    // First, check if the exact name "default project" exists
+    const exactProjectExists = mindData.some(
+      (project: ImportedDataState) => project.projectName === projectName
+    );
+
+    if (exactProjectExists) {
+      // If "default project" exists, only then we need to find the next available number
+      const existingProjects = mindData.filter((item: ImportedDataState) =>
+        item.projectName.startsWith(projectName)
+      );
+
+      // Collect suffixes for all matching projects (e.g., default project1, default project2, etc.)
+      const suffixes = existingProjects.map((project: ImportedDataState) => {
+        const match = project.projectName.match(new RegExp(`^${projectName} (\\d+)$`));
+        if (match) {
+          return parseInt(match[1], 10);
+        }
+        return null;
+      }).filter(suffix => suffix !== null) as number[]; // Remove non-numeric matches
+
+      // Sort suffixes to identify gaps
+      suffixes.sort((a, b) => a - b);
+
+      let newSuffix = 1; // Start from 1, as we are looking for 'default project 1', 'default project 2', etc.
+
+      for (let i = 0; i < suffixes.length; i++) {
+        if (suffixes[i] === newSuffix) {
+          newSuffix++;
+        } else {
+          break; // Found a gap, stop here
+        }
       }
+
+      // Set the new project name to 'default project ' + newSuffix (e.g., 'default project 1', 'default project 2')
+      projectName = projectName + " " + newSuffix;
     }
 
-    if (count > 0) {
-      message.error({
-        content: "Duplicate Project Name",
-      });
-      return false;
-    } else {
-      mindData.unshift(dataState); // Pushing the loaded project to the first item
-      localStorage.setItem("mindMapData", JSON.stringify(mindData));
-      window.dispatchEvent(new Event("projectChanged"));
+    // Assign the final project name to dataState and save to localStorage
+    dataState.projectName = projectName;
+    mindData.unshift(dataState); // Insert the new project at the start
+    localStorage.setItem("mindMapData", JSON.stringify(mindData));
+    window.dispatchEvent(new Event("projectChanged"));
 
-      return true;
-    }
+    return true;
   }
+
+  return false;
 };

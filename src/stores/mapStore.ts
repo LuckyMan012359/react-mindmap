@@ -120,9 +120,8 @@ const jsonToXML = (mindMap: Node[]): string => {
     const childrenXML = children.map(getNodeXML).join("");
     includedNodeIds.add(node.id);
 
-    return `<node ID="${node.id}" TEXT="${node.topic}"${
-      node.isroot ? ' ROOT="true"' : ""
-    } BACKGROUND_COLOR="${backgroundColor}">${childrenXML}</node>`;
+    return `<node ID="${node.id}" TEXT="${node.topic}"${node.isroot ? ' ROOT="true"' : ""
+      } BACKGROUND_COLOR="${backgroundColor}">${childrenXML}</node>`;
   };
 
   const rootNode = mindMap.find((n) => n.isroot);
@@ -153,9 +152,8 @@ const jsonToXMLSelectNode = (node: Node): string => {
     backgroundColor = "#FFFFFF"; // White
   }
 
-  return `<node ID="${node.id}" TEXT="${node.topic}"${
-    node.isroot ? ' ROOT="true"' : ""
-  } BACKGROUND_COLOR="${backgroundColor}"></node>`;
+  return `<node ID="${node.id}" TEXT="${node.topic}"${node.isroot ? ' ROOT="true"' : ""
+    } BACKGROUND_COLOR="${backgroundColor}"></node>`;
 };
 
 const xmlToJson = (xmlString: string): Node[] => {
@@ -289,18 +287,71 @@ const useMindMapStore = create<MindMapState>((set) => ({
         return { minds: state.minds };
       }
 
+      // Retrieve existing projects from localStorage
+      const data = localStorage.getItem("mindMapData");
+      let newProjectName = projectName;
+
+      if (data) {
+        try {
+          const parsedMinds = JSON.parse(data) as mindMap[];
+
+          // Check if the exact project name exists
+          const exactProjectExists = parsedMinds.some(
+            (project) => project.projectName === projectName
+          );
+
+          if (exactProjectExists) {
+            // Filter the existing projects that start with the same base name
+            let existingProjects = parsedMinds.filter(
+              (item) => item.projectName.startsWith(projectName)
+            );
+
+            // Collect suffixes for all matching projects (e.g., project1, project2, etc.)
+            const suffixes = existingProjects.map((project) => {
+              const match = project.projectName.match(new RegExp(`^${projectName} (\\d+)$`));
+              if (match) {
+                return parseInt(match[1], 10);
+              }
+              return null;
+            }).filter(suffix => suffix !== null) as number[]; // Remove non-numeric matches
+
+            // Sort suffixes to identify gaps
+            suffixes.sort((a, b) => a - b);
+
+            let newSuffix = 1; // Start from 1, as we are looking for 'project 1', 'project 2', etc.
+
+            for (let i = 0; i < suffixes.length; i++) {
+              if (suffixes[i] === newSuffix) {
+                newSuffix++;
+              } else {
+                break; // Found a gap, stop here
+              }
+            }
+
+            // Set the new project name to 'project ' + newSuffix (e.g., 'project 1', 'project 2')
+            newProjectName = projectName + " " + newSuffix;
+          }
+        } catch (error) {
+          console.error("Failed to parse mind map data:", error);
+        }
+      }
+
+      // Create the new project with the updated project name
       const newMindMap = {
         ...defaultMindMap,
-        projectName,
-        data: [
-          { id: "root", isroot: true, topic: "New MindMap", type: "root" },
-        ],
+        projectName: newProjectName,
+        data: [{ id: "root", isroot: true, topic: "New MindMap", type: "root" }],
       };
+
+      // Update the state and localStorage
       const updatedMinds = [newMindMap, ...state.minds];
       localStorage.setItem("mindMapData", JSON.stringify(updatedMinds));
       window.dispatchEvent(new Event("projectChanged"));
+
       return { minds: updatedMinds, currentMind: newMindMap };
     }),
+
+
   getProjects: () => {
     const data = localStorage.getItem("mindMapData");
     if (data) {
@@ -330,20 +381,49 @@ const useMindMapStore = create<MindMapState>((set) => ({
     if (data) {
       try {
         const parsedMinds = JSON.parse(data) as mindMap[];
-        let count = 0;
-        for (let i = 0; i < parsedMinds.length; i++) {
-          if (parsedMinds[i].projectName == projectName) {
-            count++;
+
+        let newProjectName = projectName;
+
+        // Check if the exact project name exists
+        const exactProjectExists = parsedMinds.some(
+          (project) => project.projectName === projectName
+        );
+
+        if (exactProjectExists) {
+          // Filter the existing projects that start with the same base name
+          let existingProjects = parsedMinds.filter(
+            (item) => item.projectName.startsWith(projectName)
+          );
+
+          // Collect suffixes for all matching projects (e.g., project1, project2, etc.)
+          const suffixes = existingProjects.map((project) => {
+            const match = project.projectName.match(new RegExp(`^${projectName} (\\d+)$`));
+            if (match) {
+              return parseInt(match[1], 10);
+            }
+            return null;
+          }).filter(suffix => suffix !== null) as number[]; // Remove non-numeric matches
+
+          // Sort suffixes to identify gaps
+          suffixes.sort((a, b) => a - b);
+
+          let newSuffix = 1; // Start from 1, as we are looking for 'project 1', 'project 2', etc.
+
+          for (let i = 0; i < suffixes.length; i++) {
+            if (suffixes[i] === newSuffix) {
+              newSuffix++;
+            } else {
+              break; // Found a gap, stop here
+            }
           }
+
+          // Set the new project name to 'project ' + newSuffix (e.g., 'project 1', 'project 2')
+          newProjectName = projectName + " " + newSuffix;
         }
-        if (count > 0) {
-          message.error({
-            content: "Duplicate Project Name",
-          });
-          return;
-        }
+
+        // Update the project name for the first item
         if (parsedMinds.length > 0) {
-          parsedMinds[0].projectName = projectName;
+          parsedMinds[0].projectName = newProjectName;
           localStorage.setItem("mindMapData", JSON.stringify(parsedMinds));
           window.dispatchEvent(new Event("projectChanged"));
         }
@@ -352,6 +432,8 @@ const useMindMapStore = create<MindMapState>((set) => ({
       }
     }
   },
+
+
   deleteMindMapProject: () => {
     const data = localStorage.getItem("mindMapData");
 
