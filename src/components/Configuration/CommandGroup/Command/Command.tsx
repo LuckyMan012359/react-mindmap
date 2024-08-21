@@ -171,8 +171,6 @@ export default function Command({
     if (!isClient) {
       const storedRequest = getCommand(id);
 
-      console.log(storedRequest);
-
       const assistantID = getDefaultAssistantId();
       const defaultThreadID = getDefaultThreadId();
 

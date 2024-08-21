@@ -900,7 +900,7 @@ const useMindMapStore = create<MindMapState>((set) => ({
             : false;
         }
 
-        console.log(parent, brother);
+        console.log("parent:", parent, "brother:", brother, "In here, you can see parent and brother is included depends on selected node's type");
 
         let promptNodes = [];
         let nodeData: Node;
@@ -965,9 +965,6 @@ const useMindMapStore = create<MindMapState>((set) => ({
 
           if (brother) {
             for (let i = 0; i < data[0].data.length; i++) {
-              console.log(data[0].data[i].id);
-              console.log(node);
-
               if (node.id != "root") {
                 if (
                   data[0].data[i].parentid == node.parent.id &&
@@ -999,7 +996,11 @@ const useMindMapStore = create<MindMapState>((set) => ({
           }
         }
 
+        console.log(promptNodes, "This is mindmap array data and it is include selected node and parent or brother nodes if they are seleted.");
+
         const xmlData = jsonToXML(promptNodes);
+
+        console.log(xmlData, "This is mindmap xml data and it is include selected node and parent or brother nodes if they are seleted.");
 
         const selectNodeXmlData = jsonToXMLSelectNode(node);
 

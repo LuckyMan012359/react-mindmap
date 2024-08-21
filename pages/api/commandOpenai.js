@@ -59,7 +59,7 @@ async function createThreadMessage(
 ) {
   return await openai.beta.threads.messages.create(threadId, {
     role: "user",
-    content: `Be specific and don't write more than 10 words.
+    content: `Be specific and you don't have to write more than 20 words.
       Current mindmap is ${nodes} and current node is ${selectNode}.
       ${prompt}`,
   });
