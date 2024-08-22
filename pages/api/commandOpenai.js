@@ -5,8 +5,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
-  const { openAIKey, defaultAssistantId, prompt, threadId, nodes, selectNode } =
-    req.body;
+  const {
+    openAIKey,
+    defaultAssistantId,
+    prompt,
+    threadId,
+    nodes,
+    selectNode,
+    general_prompt,
+  } = req.body;
 
   console.log(openAIKey);
 
@@ -24,7 +31,8 @@ export default async function handler(req, res) {
       threadId,
       nodes,
       selectNode,
-      prompt
+      prompt,
+      general_prompt
     );
     console.log(message.content);
 
@@ -53,16 +61,20 @@ export default async function handler(req, res) {
 async function createThreadMessage(
   openai,
   threadId,
-  nodes,
-  selectNode,
-  prompt
+  mindmap,
+  node,
+  prompt,
+  general_prompt
 ) {
+  const generalPrompt = prompt
+    .replace("${node}", node)
+    .replace("${mindmap}", mindmap);
+
+  console.log(generalPrompt);
+
   return await openai.beta.threads.messages.create(threadId, {
     role: "user",
-    content:
-      `Be specific and you have to write shorter than 20 words.` +
-      `Current mindmap is ${nodes} and current node is ${selectNode}.` +
-      `${prompt}`,
+    content: ` ${general_prompt} ${generalPrompt}`,
   });
 }
 

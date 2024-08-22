@@ -871,6 +871,7 @@ const useMindMapStore = create<MindMapState>((set) => ({
 
       const openAIKey = data[0].configuration.openAIKey;
       const defaultAssistantId = data[0].configuration.defaultAssistantId;
+      const requestInstruction = data[0].RequestInstruction
 
       try {
         const currentCommand = data[0].configuration.commands[key];
@@ -1000,6 +1001,7 @@ const useMindMapStore = create<MindMapState>((set) => ({
             threadId: data[0].configuration.defaultThreadId,
             nodes: xmlData,
             selectNode: selectNodeXmlData,
+            general_prompt: requestInstruction
           },
           { cancelToken: cancelToken }
         );

@@ -29,7 +29,6 @@ body {
 #jsmind_container {
   white-space: pre-wrap; /* Ensure the text wraps */
   width: auto !important; /* Allow nodes to expand */
-  max-width: none; /* Remove any maximum width restrictions */
   word-wrap: break-word;
 }
 
@@ -43,6 +42,7 @@ body {
 
 .jmnode-overflow-hidden jmnode {
   white-space: pre-wrap !important;
+  max-width: none !important;
 }
 
 .backgroundColor {
