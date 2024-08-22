@@ -27,7 +27,22 @@ body {
 }
 
 #jsmind_container {
-  width: 100%;
+  white-space: pre-wrap; /* Ensure the text wraps */
+  width: auto !important; /* Allow nodes to expand */
+  max-width: none; /* Remove any maximum width restrictions */
+  word-wrap: break-word;
+}
+
+#jsmind_container .jsmind-node {
+  cursor: move; /* Show the move cursor when hovering over nodes */
+}
+
+#jsmind_container .jsmind-inner {
+  user-select: none; /* Prevent text selection during dragging */
+}
+
+.jmnode-overflow-hidden jmnode {
+  white-space: pre-wrap !important;
 }
 
 .backgroundColor {

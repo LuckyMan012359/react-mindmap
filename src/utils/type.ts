@@ -14,7 +14,6 @@ export interface checkState {
 
 export interface Commands {
   commandName: string;
-  commandShortcut: string;
   assistantId: string;
   threadId: string;
   commands: string;
@@ -27,7 +26,6 @@ export interface Commands {
 
 export interface ReturnCommand {
   commandName: string;
-  commandShortcut: string;
   assistantId: string;
   threadId: string;
   commands: string;
@@ -48,7 +46,6 @@ export interface configuration {
 export interface mindMap {
   meta: {
     name: string;
-    author: string;
     version: string;
   };
   format: string;

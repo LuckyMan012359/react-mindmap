@@ -129,7 +129,6 @@ const CommandSidebar: React.FC = () => {
           draggable
         >
           <h1>{item.commandName}</h1>
-          <h1>{item.commandShortcut}</h1>
         </div>
       ))}
       {contextMenu.visible && (

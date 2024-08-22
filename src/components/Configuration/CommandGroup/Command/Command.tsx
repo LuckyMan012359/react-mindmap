@@ -4,7 +4,15 @@ import React, {
   DragEvent,
   KeyboardEvent as ReactKeyboardEvent,
 } from "react";
-import { Button, Input, Select, Checkbox, message, Modal } from "antd";
+import {
+  Button,
+  Input,
+  Select,
+  Checkbox,
+  message,
+  Modal,
+  notification,
+} from "antd";
 import type { CheckboxProps } from "antd";
 import {
   FullscreenOutlined,
@@ -26,6 +34,7 @@ import {
   defaultContentCheckedList,
 } from "@/utils/data";
 import { configuration } from "@/utils/type";
+import axios from "axios";
 
 interface CommandProps {
   id: number;
@@ -55,6 +64,7 @@ export default function Command({
     getDefaultAssistantId,
     getConfiguration,
     getDefaultThreadId,
+    getOpenAIKey,
   } = useMindMapStore();
 
   const [showModal, setShowModal] = useState(false);
@@ -74,7 +84,6 @@ export default function Command({
   );
 
   const [commandName, setCommandName] = useState("");
-  const [commandShortcut, setCommandShortcut] = useState("");
   const [assistantId, setAssistantId] = useState("");
   const [threadId, setThreadId] = useState("");
   const [commandsContent, setCommandsContent] = useState("");
@@ -126,7 +135,6 @@ export default function Command({
       setThreadId(defaultThreadId);
       saveCommand(
         commandName,
-        commandShortcut,
         assistantId,
         defaultThreadId,
         selectedValue,
@@ -143,7 +151,6 @@ export default function Command({
     if (isClient) {
       saveCommand(
         commandName,
-        commandShortcut,
         assistantId,
         threadId,
         selectedValue,
@@ -156,7 +163,6 @@ export default function Command({
     }
   }, [
     commandName,
-    commandShortcut,
     assistantId,
     threadId,
     commandsContent,
@@ -183,7 +189,6 @@ export default function Command({
           storedRequest.content || defaultContentCheckedList
         );
         setCommandName(storedRequest.commandName || "");
-        setCommandShortcut(storedRequest.commandShortcut || "");
         setAssistantId(
           storedRequest.assistantId
             ? storedRequest.assistantId
@@ -199,54 +204,6 @@ export default function Command({
       }
     }
   }, []);
-
-  const handleKeyDown = (event: KeyboardEvent) => {
-    let newShortcut = "";
-
-    const specialKeys = ["Shift", "Control", "Alt", "Meta"];
-
-    if (!specialKeys.includes(event.key)) {
-      if (event.altKey && event.key) {
-        event.preventDefault();
-        newShortcut = `Alt + ${event.key.toUpperCase()}`;
-      } else if (event.ctrlKey && event.key) {
-        event.preventDefault();
-        newShortcut = `Ctrl + ${event.key.toUpperCase()}`;
-      } else if (event.shiftKey && event.key) {
-        event.preventDefault();
-        newShortcut = `Shift + ${event.key.toUpperCase()}`;
-      }
-
-      if (newShortcut && !allShortcuts.includes(newShortcut)) {
-        setCommandShortcut(newShortcut);
-        updateShortcuts(newShortcut, id);
-        saveCommand(
-          commandName,
-          newShortcut,
-          assistantId,
-          threadId,
-          selectedValue,
-          checkedIdeasList,
-          checkedContextList,
-          checkedContentList,
-          commandsContent,
-          id
-        );
-      } else if (newShortcut) {
-        message.error("Shortcut already in use");
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (isKeypress) {
-      window.addEventListener("keydown", handleKeyDown as EventListener);
-
-      return () => {
-        window.removeEventListener("keydown", handleKeyDown as EventListener);
-      };
-    }
-  });
 
   useEffect(() => {
     const handleThreadIdUpdate = (event: Event) => {
@@ -273,6 +230,38 @@ export default function Command({
   }, [id]);
 
   const overflow = isEditing ? "overflow-hidden" : "overflow-scroll";
+
+  const createThreadID = async () => {
+    try {
+      const openAIKey = getOpenAIKey();
+
+      const response = await axios.post("/api/openai", {
+        openAIKey: openAIKey,
+      });
+      console.log(response);
+      return response.data.id;
+    } catch (error: any) {
+      if (error.response.status == 401) {
+        notification.error({
+          message: "Invalid OpenAI API key",
+        });
+      } else if (error.response.status === 400) {
+        notification.error({
+          message: "OpenAI API key is required",
+        });
+      }
+    }
+  };
+
+  const getThreadID = async () => {
+    if (!threadId) {
+      const newThreadId: any = await createThreadID();
+
+      console.log(newThreadId);
+
+      setThreadId(newThreadId);
+    }
+  };
 
   return (
     <div
@@ -329,27 +318,6 @@ export default function Command({
             </div>
             <div className="w-[full] flex justify-between items-center max-[850px]:flex-col max-[850px]:gap-2">
               <div className="w-[200px] max-[850px]:w-full">
-                <h1 className="max-[465px]:text-[14px]">Command Shortcut</h1>
-              </div>
-              <div className="grow max-[850px]:w-full">
-                <Input
-                  placeholder="Input"
-                  value={commandShortcut}
-                  disabled={isEditing}
-                  onClick={() => {
-                    setIsKeypress(true);
-                  }}
-                  onChange={(e) => {
-                    setCommandShortcut(e.target.value);
-                    setIsClient(true);
-                    handleOnChange(e);
-                    setIsKeypress(true);
-                  }}
-                />
-              </div>
-            </div>
-            <div className="w-[full] flex justify-between items-center max-[850px]:flex-col max-[850px]:gap-2">
-              <div className="w-[200px] max-[850px]:w-full">
                 <h1 className="max-[465px]:text-[14px]">Assistant Id</h1>
               </div>
               <div className="grow max-[850px]:w-full">
@@ -363,9 +331,7 @@ export default function Command({
                     handleOnChange(e);
                     setIsKeypress(false);
                   }}
-                  onClick={() => {
-                    setIsKeypress(false);
-                  }}
+                  onBlur={getThreadID}
                 />
               </div>
             </div>
@@ -387,6 +353,7 @@ export default function Command({
                   onClick={() => {
                     setIsKeypress(false);
                   }}
+                  onBlur={getThreadID}
                 />
               </div>
             </div>

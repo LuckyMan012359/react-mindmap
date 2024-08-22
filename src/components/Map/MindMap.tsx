@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import jsMind from "jsmind";
+import "jsmind/draggable-node";
 import useMindMapStore from "@/stores/mapStore";
 import { Commands, mindMap } from "@/utils/type";
 import "jsmind/style/jsmind.css";
@@ -11,6 +13,8 @@ import {
 } from "@ant-design/icons";
 import { message, Modal, Input, Button, notification } from "antd";
 import axios from "axios";
+
+const { TextArea } = Input;
 
 const MindMap = () => {
   const reactFlowWrapper = useRef<HTMLDivElement | null>(null);
@@ -36,13 +40,12 @@ const MindMap = () => {
     getCommands,
     updateNodeContent,
     executeCommand,
-    getCommandByShortcut,
     commandToExecute,
     setCommandToExecute,
+    getDatas,
   } = useMindMapStore();
   const [showLoading, setShowLoading] = useState<boolean>(false);
   const [cancelTokenSource, setCancelTokenSource] = useState<any>(null);
-  const [isShortcutPress, setIsShortcutPress] = useState<boolean>(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -54,32 +57,73 @@ const MindMap = () => {
     initializeMindMap();
   }, [isClient]);
 
+  const getMindMapData = () => {
+    if (jmRef.current) {
+      // Try using the 'node_array' format instead of 'json'
+      const mindMapData = jmRef.current.get_data("node_array");
+
+      if (!mindMapData) {
+        message.error({
+          content: "Failed to retrieve mind map data.",
+        });
+        return null;
+      }
+
+      // You can still store or send this data as needed
+      const localData = localStorage.getItem("mindMapData");
+
+      if (localData) {
+        let nodeData: mindMap[] = JSON.parse(localData);
+
+        nodeData[0].data = mindMapData.data;
+
+        localStorage.setItem("mindMapData", JSON.stringify(nodeData));
+      }
+
+      // Return the data for further use
+      return mindMapData;
+    } else {
+      message.error({
+        content: "MindMap instance not initialized.",
+      });
+      return null;
+    }
+  };
+
   useEffect(() => {
     if (!isClient || !currentMind) return;
 
     const loadMindMapInstance = async () => {
-      const { default: jsMind } = await import("jsmind");
       const options = {
         container: "jsmind_container",
         editable: true,
         theme: "primary",
         layout: {
           hspace: 30,
-          vspace: 20,
+          vspace: 30,
           pspace: 13,
           direction: "right",
+          // Ensure full text is displayed in nodes
           node_overflow: "wrap",
+        },
+        view: {
+          line_width: 2,
+          line_color: "#555",
+          draggable: true,
         },
       };
       if (!jmRef.current) {
         const jm = new jsMind(options);
-        jm.show(currentMind);
+        const data: any = currentMind;
+        jm.show(data);
         jmRef.current = jm;
       } else {
         jmRef.current.show(currentMind);
       }
 
       applyNodeBackgroundColors(currentMind);
+
+      getMindMapData();
 
       document
         .getElementById("jsmind_container")
@@ -234,7 +278,7 @@ const MindMap = () => {
   };
 
   const handleClickOutside = (event: MouseEvent) => {
-    setIsShortcutPress(false);
+    getMindMapData();
 
     if (
       contextMenuRef.current &&
@@ -250,7 +294,6 @@ const MindMap = () => {
 
     setCurrentNode(selectedNode);
     setEditedContent(selectedNode.topic);
-    setIsShortcutPress(false);
     setEditModalVisible(true);
   };
 
@@ -310,6 +353,17 @@ const MindMap = () => {
         return;
       }
 
+      const nodesData = getDatas();
+
+      const status = nodesData[0].data.filter((item) => item.id === nodeID.id);
+      console.log(status);
+
+      if (!status || (Array.isArray(status) && status.length === 0)) {
+        notification.error({
+          message: "Node already deleted.",
+        });
+        return;
+      }
       jmRef.current?.remove_node(nodeID.id);
       deleteNode(nodeID.id);
       setContextMenu({ visible: false, x: 0, y: 0 });
@@ -360,7 +414,6 @@ const MindMap = () => {
         data: nodeContent.data,
       };
       localStorage.setItem("nodeData", JSON.stringify(nodeData));
-      setIsShortcutPress(true);
     }
   };
 
@@ -373,13 +426,11 @@ const MindMap = () => {
   const handleCancel = () => {
     if (cancelTokenSource) {
       setShowLoading(false);
-      setIsShortcutPress(false);
       cancelTokenSource.cancel("Request canceled by user.");
       notification.info({
         message: "Command is stopped",
       });
     } else {
-      setIsShortcutPress(false);
       setShowLoading(false);
     }
   };
@@ -404,7 +455,6 @@ const MindMap = () => {
         });
         setShowLoading(false);
       }
-      setIsShortcutPress(false);
     };
 
     window.addEventListener(
@@ -419,70 +469,6 @@ const MindMap = () => {
       );
     };
   }, []);
-
-  const handleExecuteCommandByShortcut = (event: KeyboardEvent) => {
-    const selectedNode = jmRef.current?.get_selected_node();
-    let newShortcut = "";
-
-    const specialKeys = ["Shift", "Control", "Alt", "Meta", "Delete"];
-
-    if (!specialKeys.includes(event.key)) {
-      if (!selectedNode) {
-        message.error({
-          content: "Please select node.",
-        });
-        return;
-      }
-      if (event.altKey && event.key) {
-        event.preventDefault();
-        newShortcut = `Alt + ${event.key.toUpperCase()}`;
-      } else if (event.ctrlKey && event.key) {
-        event.preventDefault();
-        newShortcut = `Ctrl + ${event.key.toUpperCase()}`;
-      } else if (event.shiftKey && event.key) {
-        event.preventDefault();
-        newShortcut = `Shift + ${event.key.toUpperCase()}`;
-      }
-    }
-
-    const command = getCommandByShortcut(newShortcut);
-
-    if (command) {
-      console.log(command.command.commandShortcut);
-    }
-
-    if (
-      command &&
-      command.command.commandShortcut != "" &&
-      command.command.commandShortcut
-    ) {
-      handleExecuteCommand(
-        command.command.select,
-        command.command.commandName,
-        command.index
-      );
-    } else {
-      return;
-    }
-
-    setIsShortcutPress(false);
-  };
-
-  useEffect(() => {
-    if (isShortcutPress) {
-      window.addEventListener(
-        "keydown",
-        handleExecuteCommandByShortcut as EventListener
-      );
-
-      return () => {
-        window.removeEventListener(
-          "keydown",
-          handleExecuteCommandByShortcut as EventListener
-        );
-      };
-    }
-  });
 
   if (!isClient) return null;
 
@@ -572,23 +558,18 @@ const MindMap = () => {
         open={editModalVisible}
         onOk={handleEditSave}
         onCancel={() => setEditModalVisible(false)}
-        keyboard={true}
+        // keyboard={true}
       >
-        <Input
+        <TextArea
           value={editedContent}
-          onPressEnter={() => {
-            handleEditSave();
-            setEditModalVisible(false);
-          }}
           onClick={(e) => {
-            setIsShortcutPress(false);
             e.stopPropagation();
           }}
           onChange={(e) => {
             setEditedContent(e.target.value);
             e.stopPropagation();
-            setIsShortcutPress(false);
           }}
+          autoSize={{ minRows: 2 }}
         />
       </Modal>
       <Modal

@@ -59,9 +59,10 @@ async function createThreadMessage(
 ) {
   return await openai.beta.threads.messages.create(threadId, {
     role: "user",
-    content: `Be specific and you don't have to write more than 20 words.
-      Current mindmap is ${nodes} and current node is ${selectNode}.
-      ${prompt}`,
+    content:
+      `Be specific and you have to write shorter than 20 words.` +
+      `Current mindmap is ${nodes} and current node is ${selectNode}.` +
+      `${prompt}`,
   });
 }
 
@@ -72,11 +73,11 @@ async function checkStatus(openai, threadId, runId) {
     if (runStatus.status === "completed") {
       isComplete = true;
     } else {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 5000));
     }
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 2000));
+  await new Promise((resolve) => setTimeout(resolve, 5000));
 }
 
 function normalizeResponse(messageContent) {
