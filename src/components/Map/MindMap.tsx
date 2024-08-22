@@ -4,13 +4,7 @@ import "jsmind/draggable-node";
 import useMindMapStore from "@/stores/mapStore";
 import { Commands, mindMap } from "@/utils/type";
 import "jsmind/style/jsmind.css";
-import CommandSidebar from "./CommandSidebar/CommandSidebar";
-import {
-  MinusCircleOutlined,
-  FullscreenOutlined,
-  PlusCircleOutlined,
-  LoadingOutlined,
-} from "@ant-design/icons";
+import { LoadingOutlined } from "@ant-design/icons";
 import { message, Modal, Input, Button, notification } from "antd";
 import axios from "axios";
 
@@ -26,7 +20,6 @@ const MindMap = () => {
     x: 0,
     y: 0,
   });
-  const [showCommandBar, setShowCommandBar] = useState<boolean>(true);
   const [commands, setCommands] = useState<Commands[]>([]);
   const [editModalVisible, setEditModalVisible] = useState<boolean>(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState<boolean>(false);
@@ -539,20 +532,6 @@ const MindMap = () => {
           </ul>
         </div>
       )}
-      <div className="absolute left-30 top-[300px] w-[280px] z-10 max-[1365px]:top-[530px] max-[630px]:top-[610px] max-[630px]:w-[238px]">
-        <div className="border-[1px] border-[solid] border-black h-[40px] w-full relative flex justify-center items-center bg-white">
-          <h1>Command Bar</h1>
-          <div className="absolute right-0 top-0 w-[75px] h-full flex justify-between items-center px-[15px]">
-            {showCommandBar ? (
-              <MinusCircleOutlined onClick={() => setShowCommandBar(false)} />
-            ) : (
-              <PlusCircleOutlined onClick={() => setShowCommandBar(true)} />
-            )}
-            <FullscreenOutlined />
-          </div>
-        </div>
-        {showCommandBar && <CommandSidebar />}
-      </div>
       <Modal
         title="Edit Node Content"
         open={editModalVisible}

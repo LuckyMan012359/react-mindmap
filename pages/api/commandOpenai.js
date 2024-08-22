@@ -63,18 +63,18 @@ async function createThreadMessage(
   threadId,
   mindmap,
   node,
-  prompt,
+  generalPrompt,
   general_prompt
 ) {
-  const generalPrompt = prompt
+  const prompt = generalPrompt
     .replace("${node}", node)
     .replace("${mindmap}", mindmap);
 
-  console.log(generalPrompt);
+  console.log(prompt);
 
   return await openai.beta.threads.messages.create(threadId, {
     role: "user",
-    content: ` ${general_prompt} ${generalPrompt}`,
+    content: ` ${general_prompt} ${prompt}`,
   });
 }
 

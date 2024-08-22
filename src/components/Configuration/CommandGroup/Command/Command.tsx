@@ -125,18 +125,17 @@ export default function Command({
     setIsClient(true);
   };
 
-  const setCommandThreadId = () => {
+  const setCommandThreadId = async () => {
     const thread = getCommand(id);
-    const configurationData = getConfiguration();
 
-    const defaultThreadId = configurationData.defaultThreadId;
+    const newthreadId = await createThreadID();
 
     if (thread.threadId === "") {
-      setThreadId(defaultThreadId);
+      setThreadId(newthreadId);
       saveCommand(
         commandName,
         assistantId,
-        defaultThreadId,
+        newthreadId,
         selectedValue,
         checkedIdeasList,
         checkedContextList,
