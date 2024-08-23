@@ -996,9 +996,9 @@ const useMindMapStore = create<MindMapState>((set) => ({
           "/api/commandOpenai",
           {
             openAIKey: openAIKey,
-            defaultAssistantId: defaultAssistantId,
+            defaultAssistantId: currentCommand.assistantId != defaultAssistantId ? currentCommand.assistantId : defaultAssistantId,
             prompt: currentCommand.commands,
-            threadId: data[0].configuration.defaultThreadId,
+            threadId: currentCommand.threadId,
             nodes: xmlData,
             selectNode: selectNodeXmlData,
             general_prompt: requestInstruction
