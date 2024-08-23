@@ -85,11 +85,11 @@ async function checkStatus(openai, threadId, runId) {
     if (runStatus.status === "completed") {
       isComplete = true;
     } else {
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 5000));
+  await new Promise((resolve) => setTimeout(resolve, 2000));
 }
 
 function normalizeResponse(messageContent) {
