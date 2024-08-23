@@ -920,7 +920,11 @@ const useMindMapStore = create<MindMapState>((set) => ({
 
         console.log(node);
 
-        if (!parent && !brother) {
+        if (node.id === "root") {
+          promptNodes.push(createNodeData(node));
+        } else if (!parent && !brother) {
+          console.log(123456789);
+
           const addSubNodes = (currentNode: any) => {
             // Add the current node
             promptNodes.push(createNodeData(currentNode));
@@ -935,11 +939,7 @@ const useMindMapStore = create<MindMapState>((set) => ({
 
           // Start from the selected node
           addSubNodes(node);
-        }
-
-        // 2. BROTHER: Include the selected node, children, and siblings (brother nodes)
-        // Include the parent for reference to the sibling
-        if (!parent && brother) {
+        } else if (!parent && brother) {
           const addSubNodes = (currentNode: any) => {
             // Add the current node
             promptNodes.push(createNodeData(currentNode));
@@ -954,10 +954,7 @@ const useMindMapStore = create<MindMapState>((set) => ({
 
           // Start from the selected node
           addSubNodes(node?.parent);
-        }
-
-        // 3. PARENT: Include the selected node, children, siblings, parent's siblings, and grandparent
-        if (parent && !brother) {
+        } else if (parent && !brother) {
           const addSubNodes = (currentNode: any) => {
             // Add the current node
             promptNodes.push(createNodeData(currentNode));
@@ -977,10 +974,7 @@ const useMindMapStore = create<MindMapState>((set) => ({
           else {
             addSubNodes(node?.parent);
           }
-        }
-
-        // 4. ALL: Include all nodes in the mind map
-        if (parent && brother) {
+        } else if (parent && brother) {
           data[0].data.forEach((node: any) => {
             promptNodes.push(node);
           });
