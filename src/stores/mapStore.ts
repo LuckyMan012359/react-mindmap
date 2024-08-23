@@ -1,4 +1,4 @@
-import { message } from "antd";
+import { message, notification } from "antd";
 import { create } from "zustand";
 import axios from "axios";
 import {
@@ -875,6 +875,8 @@ const useMindMapStore = create<MindMapState>((set) => ({
 
       try {
         const currentCommand = data[0].configuration.commands[key];
+
+        console.log(currentCommand.assistantId, defaultAssistantId);
 
         let parent;
         let brother;

@@ -447,6 +447,11 @@ const MindMap = () => {
           message: "Thread Id is required",
         });
         setShowLoading(false);
+      } else if (errorStatus === 404) {
+        notification.error({
+          message: "Please input assistant Id",
+        });
+        setShowLoading(false);
       }
     };
 
