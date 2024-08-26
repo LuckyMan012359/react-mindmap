@@ -416,13 +416,15 @@ const MindMap = () => {
     }
   };
 
-  const handleCancel = () => {
+  const handleCancel = (status: boolean) => {
     if (cancelTokenSource) {
       setShowLoading(false);
       cancelTokenSource.cancel("Request canceled by user.");
-      notification.info({
-        message: "Command is stopped",
-      });
+      if (status) {
+        notification.info({
+          message: "Command is stopped",
+        });
+      }
     } else {
       setShowLoading(false);
     }
@@ -432,26 +434,46 @@ const MindMap = () => {
     const handleThreadIdUpdate = (event: Event) => {
       const customEvent = event as CustomEvent;
       const { errorStatus } = customEvent.detail;
-      if (errorStatus === 401) {
-        notification.error({
-          message: "Invalid OpenAI API key",
-        });
-        setShowLoading(false);
-      } else if (errorStatus === 402) {
-        notification.error({
-          message: "OpenAI API key is required",
-        });
-        setShowLoading(false);
-      } else if (errorStatus === 400) {
-        notification.error({
-          message: "Thread Id is required",
-        });
-        setShowLoading(false);
-      } else if (errorStatus === 404) {
-        notification.error({
-          message: "Please input assistant Id",
-        });
-        setShowLoading(false);
+
+      switch (errorStatus) {
+        case 401:
+          notification.error({
+            message: "Invalid OpenAI API key",
+          });
+          setShowLoading(false);
+          break;
+        case 402:
+          notification.error({
+            message: "OpenAI API key is required",
+          });
+          setShowLoading(false);
+          break;
+        case 400:
+          notification.error({
+            message: "Thread Id is required",
+          });
+          setShowLoading(false);
+          break;
+        case 404:
+          notification.error({
+            message: "Please input assistant Id",
+          });
+          setShowLoading(false);
+          break;
+        case 504:
+          notification.error({
+            message:
+              "504 Gateway Timeout: The server took too long to respond.",
+          });
+          setShowLoading(true); // Keep showing loading
+          handleCancel(false); // Cancel the request
+          break;
+        default:
+          notification.error({
+            message: "An unexpected error occurred.",
+          });
+          setShowLoading(false);
+          break;
       }
     };
 
@@ -574,7 +596,7 @@ const MindMap = () => {
             <Button
               type="primary"
               className="w-[120px] h-[40px] text-[18px]"
-              onClick={handleCancel}
+              onClick={() => handleCancel(true)}
             >
               Cancel
             </Button>
