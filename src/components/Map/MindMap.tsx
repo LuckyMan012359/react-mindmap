@@ -463,7 +463,7 @@ const MindMap = () => {
         case 504:
           notification.error({
             message:
-              "504 Gateway Timeout: The server took too long to respond.",
+              "Your internet status is very poor. Please execute command again later.",
           });
           setShowLoading(true); // Keep showing loading
           handleCancel(false); // Cancel the request
