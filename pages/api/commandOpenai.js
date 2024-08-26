@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     general_prompt,
   } = req.body;
 
-  console.log(openAIKey);
+  console.log(req.body);
 
   if (!openAIKey) {
     return res.status(402).json({ error: "OpenAI API key is required" });

@@ -871,12 +871,16 @@ const useMindMapStore = create<MindMapState>((set) => ({
 
       const openAIKey = data[0].configuration.openAIKey;
       const defaultAssistantId = data[0].configuration.defaultAssistantId;
+      const defaultThreadId = data[0].configuration.defaultThreadId;
       const requestInstruction = data[0].RequestInstruction
 
       try {
         const currentCommand = data[0].configuration.commands[key];
 
-        console.log(currentCommand.assistantId, defaultAssistantId);
+        console.log(currentCommand);
+
+        console.log(defaultAssistantId);
+
 
         let parent;
         let brother;
@@ -992,9 +996,9 @@ const useMindMapStore = create<MindMapState>((set) => ({
           "/api/commandOpenai",
           {
             openAIKey: openAIKey,
-            defaultAssistantId: currentCommand.assistantId != defaultAssistantId ? currentCommand.assistantId : defaultAssistantId,
+            defaultAssistantId: currentCommand.assistantId == '' ? defaultAssistantId : currentCommand.assistantId,
             prompt: currentCommand.commands,
-            threadId: currentCommand.threadId,
+            threadId: currentCommand.threadId == '' ? defaultThreadId : currentCommand.threadId,
             nodes: xmlData,
             selectNode: selectNodeXmlData,
             general_prompt: requestInstruction
