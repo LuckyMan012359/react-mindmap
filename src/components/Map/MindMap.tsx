@@ -462,8 +462,7 @@ const MindMap = () => {
           break;
         case 504:
           notification.error({
-            message:
-              "Your internet status is very poor. Please execute command again later.",
+            message: "Request failed with status code 504",
           });
           setShowLoading(true); // Keep showing loading
           handleCancel(false); // Cancel the request
