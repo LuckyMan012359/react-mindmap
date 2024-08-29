@@ -944,40 +944,72 @@ const useMindMapStore = create<MindMapState>((set) => ({
           // Start from the selected node
           addSubNodes(node);
         } else if (!parent && brother) {
-          const addSubNodes = (currentNode: any) => {
+          const addSubNodes = (currentNode: any, selectNode: any) => {
             // Add the current node
             promptNodes.push(createNodeData(currentNode));
 
             // Recursively add all child nodes (sub-nodes)
             if (currentNode.children && currentNode.children.length > 0) {
               currentNode.children.forEach((child: any) => {
-                addSubNodes(child);  // Recursively add sub-nodes
+                if (child.data.type === selectNode.data.type && child.id != selectNode.id) {
+                  addSubNodes(child, selectNode);  // Recursively add sub-nodes
+                }
               });
             }
           };
 
+          const addSelectedNodeSubNode = (currentNode: any) => {
+            promptNodes.push(createNodeData(currentNode));
+
+            // Recursively add all child nodes (sub-nodes)
+            if (currentNode.children && currentNode.children.length > 0) {
+              currentNode.children.forEach((child: any) => {
+                addSelectedNodeSubNode(child);  // Recursively add sub-nodes
+              });
+            }
+          }
+
           // Start from the selected node
-          addSubNodes(node?.parent);
+          addSubNodes(node?.parent, node);
+          addSelectedNodeSubNode(node);
         } else if (parent && !brother) {
-          const addSubNodes = (currentNode: any) => {
+          const addSubNodes = (currentNode: any, selectNode: any) => {
+            console.log(addSubNodes);
+
             // Add the current node
             promptNodes.push(createNodeData(currentNode));
 
             // Recursively add all child nodes (sub-nodes)
             if (currentNode.children && currentNode.children.length > 0) {
               currentNode.children.forEach((child: any) => {
-                addSubNodes(child);  // Recursively add sub-nodes
+                if (child.data.type === selectNode.data.type && child.id != selectNode.id) {
+                  addSubNodes(child, selectNode);  // Recursively add sub-nodes
+                }
+              });
+            }
+          };
+
+          const addSelectedNodeSubNode = (currentNode: any) => {
+            // Add the current node
+            promptNodes.push(createNodeData(currentNode));
+
+            // Recursively add all child nodes (sub-nodes)
+            if (currentNode.children && currentNode.children.length > 0) {
+              currentNode.children.forEach((child: any) => {
+                addSelectedNodeSubNode(child);  // Recursively add sub-nodes
               });
             }
           };
 
           // Start from the selected node
           if (node?.parent?.parent) {
-            addSubNodes(node?.parent?.parent);
+            addSubNodes(node?.parent?.parent, node);
           }
           else {
-            addSubNodes(node?.parent);
+            addSubNodes(node?.parent, node);
           }
+
+          addSelectedNodeSubNode(node);
         } else if (parent && brother) {
           data[0].data.forEach((node: any) => {
             promptNodes.push(node);
