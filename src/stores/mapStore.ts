@@ -836,9 +836,6 @@ const useMindMapStore = create<MindMapState>((set) => ({
               console.log(level);
 
               if (rootNode.data.type == 'root' && level > 0) {
-                notification.error({
-                  message: "Please check Head Levels. This value is too big for selected node."
-                })
                 return;
               } else {
                 rootNode = rootNode.parent;
@@ -885,6 +882,9 @@ const useMindMapStore = create<MindMapState>((set) => ({
         }
 
         if (promptNodes.length == 0) {
+          notification.error({
+            message: "Please check Head Levels. This value is too big for selected node."
+          })
           window.dispatchEvent(new Event("projectChanged"));
 
           const event = new CustomEvent("threadIdUpdated", {
