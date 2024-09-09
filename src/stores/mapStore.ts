@@ -3,7 +3,6 @@ import { create } from "zustand";
 import axios from "axios";
 import {
   Node,
-  checkState,
   Commands,
   ReturnCommand,
   mindMap,
@@ -20,9 +19,9 @@ const defaultReturnCommand: ReturnCommand = {
   threadId: "",
   commands: "",
   select: "",
-  ideas: [],
-  context: [],
-  content: [],
+  idea: [0, 0],
+  context: [0, 0],
+  content: [0, 0],
   commandKey: new Date().toString(),
 };
 
@@ -57,9 +56,9 @@ interface MindMapState {
     assistantId: string,
     threadId: string,
     select: string,
-    ideas: Array<any>,
-    context: Array<any>,
-    content: Array<any>,
+    ideas: number[],
+    context: number[],
+    content: number[],
     commands: string,
     id: number
   ) => void;
@@ -590,31 +589,18 @@ const useMindMapStore = create<MindMapState>((set) => ({
     }
   },
   addCommand: () => {
-    let brother: checkState = {
-      idea: false,
-      context: false,
-      content: false,
-    };
+    let idea = [0, 0]
+    let content = [0, 0]
+    let context = [0, 0]
 
-    let parent: checkState = {
-      idea: false,
-      context: false,
-      content: false,
-    };
-
-    let all: checkState = {
-      idea: false,
-      context: false,
-      content: false,
-    };
     const command: Commands = {
       commandName: "",
       assistantId: "",
       threadId: "",
       select: "",
-      parent: parent,
-      brothers: brother,
-      all: all,
+      idea: idea,
+      content: content,
+      context: context,
       commands: "",
       commandKey: new Date().toString(),
     };
@@ -644,74 +630,24 @@ const useMindMapStore = create<MindMapState>((set) => ({
     assistantId: string,
     threadId: string,
     select: string,
-    ideas: Array<any>,
-    context: Array<any>,
-    content: Array<any>,
+    idea: number[],
+    context: number[],
+    content: number[],
     commands: string,
     id: number
   ) => {
     const storageData = localStorage.getItem("mindMapData");
     if (storageData) {
       const data = JSON.parse(storageData);
-      let brother: checkState = {
-        idea: false,
-        context: false,
-        content: false,
-      };
-
-      let parent: checkState = {
-        idea: false,
-        context: false,
-        content: false,
-      };
-
-      let all: checkState = {
-        idea: false,
-        context: false,
-        content: false,
-      };
-
-      if (ideas.includes("Brother")) {
-        brother.idea = true;
-      }
-
-      if (ideas.includes("Parent")) {
-        parent.idea = true;
-        if (ideas.includes("Brother")) {
-          all.idea = true;
-        }
-      }
-
-      if (context.includes("Brother")) {
-        brother.context = true;
-      }
-
-      if (context.includes("Parent")) {
-        parent.context = true;
-        if (context.includes("Brother")) {
-          all.context = true;
-        }
-      }
-
-      if (content.includes("Brother")) {
-        brother.content = true;
-      }
-
-      if (content.includes("Parent")) {
-        parent.content = true;
-        if (content.includes("Brother")) {
-          all.content = true;
-        }
-      }
 
       const command: Commands = {
         commandName,
         assistantId,
         threadId,
         select,
-        parent: parent,
-        brothers: brother,
-        all: all,
+        idea: idea,
+        content: content,
+        context: context,
         commands,
         commandKey: new Date().toString(),
       };
@@ -732,43 +668,15 @@ const useMindMapStore = create<MindMapState>((set) => ({
 
         commandData = data[0].configuration.commands[index];
 
-        let idea: string[] = ["Brother", "Parent"];
-        let context: string[] = ["Brother", "Parent"];
-        let content: string[] = ["Brother", "Parent"];
-
-        if (commandData.brothers.idea === false) {
-          idea.shift();
-        }
-
-        if (commandData.brothers.context === false) {
-          context.shift();
-        }
-
-        if (commandData.brothers.content == false) {
-          content.shift();
-        }
-
-        if (commandData.parent.idea === false) {
-          idea.pop();
-        }
-
-        if (commandData.parent.context === false) {
-          context.pop();
-        }
-
-        if (commandData.parent.content == false) {
-          content.pop();
-        }
-
         const command: ReturnCommand = {
           commandName: commandData.commandName,
           assistantId: commandData.assistantId,
           threadId: commandData.threadId,
           select: commandData.select,
           commands: commandData.commands,
-          ideas: idea,
-          context: context,
-          content: content,
+          idea: commandData.idea,
+          context: commandData.context,
+          content: commandData.content,
           commandKey: new Date().toString(),
         };
 
@@ -875,145 +783,115 @@ const useMindMapStore = create<MindMapState>((set) => ({
       const requestInstruction = data[0].RequestInstruction
 
       try {
-        const currentCommand = data[0].configuration.commands[key];
+        const currentCommand: Commands = data[0].configuration.commands[key];
 
         console.log(currentCommand);
 
         console.log(defaultAssistantId);
 
-
-        let parent;
-        let brother;
+        let headLevel = 0
+        let depth = 0
 
         if (node.data.type.toLowerCase() == "idea") {
-          parent = data[0].configuration.commands[key].parent.idea
-            ? true
-            : false;
-          brother = data[0].configuration.commands[key].brothers.idea
-            ? true
-            : false;
-        } else if (node.data.type.toLowerCase() == "context") {
-          parent = data[0].configuration.commands[key].parent.context
-            ? true
-            : false;
-          brother = data[0].configuration.commands[key].brothers.context
-            ? true
-            : false;
+          headLevel = currentCommand.idea[0]
+          depth = currentCommand.idea[1]
+        } else if (node.data.type.toLowerCase() == "content") {
+          headLevel = currentCommand.content[0]
+          depth = currentCommand.content[1]
         } else {
-          parent = data[0].configuration.commands[key].parent.content
-            ? true
-            : false;
-          brother = data[0].configuration.commands[key].brothers.content
-            ? true
-            : false;
+          headLevel = currentCommand.context[0]
+          depth = currentCommand.context[1]
         }
 
-        console.log("parent:", parent, "brother:", brother, "In here, you can see parent and brother is included depends on selected node's type");
-
         let promptNodes: any[] = [];
-
-        // if (parent && !brother) {
-
-        // } else if (!parent && brother) {
-
-        // } else if (parent && brother) {
-
-        // } else {
-
-        // }
 
         console.log(node);
 
         if (node.id === "root") {
           promptNodes.push(createNodeData(node));
-        } else if (!parent && !brother) {
-          console.log(123456789);
-
-          const addSubNodes = (currentNode: any) => {
-            // Add the current node
+        }
+        else {
+          const addSubNodes = (currentNode: any, levelsNumber: number) => {
             promptNodes.push(createNodeData(currentNode));
 
-            // Recursively add all child nodes (sub-nodes)
             if (currentNode.children && currentNode.children.length > 0) {
               currentNode.children.forEach((child: any) => {
-                addSubNodes(child);  // Recursively add sub-nodes
-              });
-            }
-          };
-
-          // Start from the selected node
-          addSubNodes(node);
-        } else if (!parent && brother) {
-          const addSubNodes = (currentNode: any, selectNode: any) => {
-            // Add the current node
-            promptNodes.push(createNodeData(currentNode));
-
-            // Recursively add all child nodes (sub-nodes)
-            if (currentNode.children && currentNode.children.length > 0) {
-              currentNode.children.forEach((child: any) => {
-                if (child.data.type === selectNode.data.type && child.id != selectNode.id) {
-                  addSubNodes(child, selectNode);  // Recursively add sub-nodes
+                if (child.data.type === currentNode.data.type && child.id != currentNode.id) {
+                  const number = levelsNumber - 1;
+                  if (number <= 0) {
+                    return;
+                  }
+                  else {
+                    addSubNodes(child, number);
+                  }
                 }
               });
             }
           };
 
-          const addSelectedNodeSubNode = (currentNode: any) => {
-            promptNodes.push(createNodeData(currentNode));
+          const findRootNode = (currentNode: any, level: number) => {
+            let rootNode = currentNode
 
-            // Recursively add all child nodes (sub-nodes)
-            if (currentNode.children && currentNode.children.length > 0) {
-              currentNode.children.forEach((child: any) => {
-                addSelectedNodeSubNode(child);  // Recursively add sub-nodes
-              });
+            while (level) {
+              console.log(level);
+
+              if (rootNode.data.type == 'root' && level > 0) {
+                notification.error({
+                  message: "Please check Head Levels. This value is too big for selected node."
+                })
+                return;
+              } else {
+                rootNode = rootNode.parent;
+                console.log(rootNode);
+              }
+              level = level - 1;
             }
+
+            return rootNode
           }
 
-          // Start from the selected node
-          addSubNodes(node?.parent, node);
-          addSelectedNodeSubNode(node);
-        } else if (parent && !brother) {
-          const addSubNodes = (currentNode: any, selectNode: any) => {
-            console.log(addSubNodes);
+          const rootNodeType = findRootNode(node, headLevel)
 
-            // Add the current node
-            promptNodes.push(createNodeData(currentNode));
+          const getNodesWithinDepth = (node: any, maxDepth: number, currentDepth = 0) => {
+            if (node == undefined) {
+              return []
+            }
 
-            // Recursively add all child nodes (sub-nodes)
-            if (currentNode.children && currentNode.children.length > 0) {
-              currentNode.children.forEach((child: any) => {
-                if (child.data.type === selectNode.data.type && child.id != selectNode.id) {
-                  addSubNodes(child, selectNode);  // Recursively add sub-nodes
+            if (currentDepth >= maxDepth) {
+              return [];
+            }
+
+            let nodes: any[] = [];
+
+            if (node.children && node.children.length > 0) {
+              node.children.forEach((child: any) => {
+                if (child.data.type === rootNodeType.data.type) {
+                  nodes.push(child);
                 }
+                nodes = nodes.concat(getNodesWithinDepth(child, maxDepth, currentDepth + 1));
               });
             }
+
+            return nodes;
           };
 
-          const addSelectedNodeSubNode = (currentNode: any) => {
-            // Add the current node
-            promptNodes.push(createNodeData(currentNode));
+          const rootNode = findRootNode(node, headLevel)
 
-            // Recursively add all child nodes (sub-nodes)
-            if (currentNode.children && currentNode.children.length > 0) {
-              currentNode.children.forEach((child: any) => {
-                addSelectedNodeSubNode(child);  // Recursively add sub-nodes
-              });
-            }
-          };
+          promptNodes = [...getNodesWithinDepth(rootNode, depth) || []];
 
-          // Start from the selected node
-          if (node?.parent?.parent) {
-            addSubNodes(node?.parent?.parent, node);
+          if (rootNode) {
+            promptNodes.unshift(rootNode)
           }
-          else {
-            addSubNodes(node?.parent, node);
-          }
+        }
 
-          addSelectedNodeSubNode(node);
-        } else if (parent && brother) {
-          data[0].data.forEach((node: any) => {
-            promptNodes.push(node);
+        if (promptNodes.length == 0) {
+          window.dispatchEvent(new Event("projectChanged"));
+
+          const event = new CustomEvent("threadIdUpdated", {
+            detail: { key },
           });
+          window.dispatchEvent(event);
+          return;
         }
 
         console.log(promptNodes, "This is mindmap array data and it is include selected node and parent or brother nodes if they are seleted.");
@@ -1161,28 +1039,5 @@ const useMindMapStore = create<MindMapState>((set) => ({
     }
   },
 }));
-// getCommandByShortcut: (shortcut: string) => {
-//   const mindmapData = localStorage.getItem("mindMapData");
-
-//   let resultCommand: any;
-
-//   if (mindmapData) {
-//     const commandData: mindMap[] = JSON.parse(mindmapData);
-
-//     if (commandData[0].configuration.commands) {
-//       commandData[0].configuration.commands.forEach((value, index) => {
-//         if (value.commandShortcut == shortcut) {
-//           const result = {
-//             command: value,
-//             index: index,
-//           };
-//           resultCommand = result;
-//         }
-//       });
-//     }
-
-//     return resultCommand;
-//   }
-// },
 
 export default useMindMapStore;

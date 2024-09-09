@@ -1,19 +1,9 @@
 import React, {
   useEffect,
   useState,
-  DragEvent,
   KeyboardEvent as ReactKeyboardEvent,
 } from "react";
-import {
-  Button,
-  Input,
-  Select,
-  Checkbox,
-  message,
-  Modal,
-  notification,
-} from "antd";
-import type { CheckboxProps } from "antd";
+import { Button, Input, Select, Modal, notification, InputNumber } from "antd";
 import {
   FullscreenOutlined,
   PaperClipOutlined,
@@ -25,14 +15,6 @@ import useMindMapStore from "@/stores/mapStore";
 const { Option } = Select;
 const { TextArea } = Input;
 
-import {
-  ideas,
-  defaultIdeasCheckedList,
-  context,
-  defaultContextCheckedList,
-  content,
-  defaultContentCheckedList,
-} from "@/utils/data";
 import { configuration } from "@/utils/type";
 import axios from "axios";
 
@@ -42,8 +24,6 @@ interface CommandProps {
   onEdit: (id: number) => void;
   onApply: (id: number) => void;
   isEditing: boolean;
-  allShortcuts: string[];
-  updateShortcuts: (shortcut: string, id: number) => void;
 }
 
 const defaultValue: string = "Node type";
@@ -54,8 +34,6 @@ export default function Command({
   onEdit,
   onApply,
   isEditing,
-  allShortcuts,
-  updateShortcuts,
 }: CommandProps) {
   const {
     deleteCommand,
@@ -71,34 +49,16 @@ export default function Command({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedValue, setSelectedValue] = useState<string>(defaultValue);
 
-  const [isClient, setIsClient] = useState(false);
+  const [idea, setIdea] = useState<number[]>([0, 0]);
+  const [content, setContent] = useState<number[]>([0, 0]);
+  const [context, setContext] = useState<number[]>([0, 0]);
 
-  const [checkedIdeasList, setCheckedIdeasList] = useState<string[]>(
-    defaultIdeasCheckedList
-  );
-  const [checkedContextList, setCheckedContextList] = useState<string[]>(
-    defaultContextCheckedList
-  );
-  const [checkedContentList, setCheckedContentList] = useState<string[]>(
-    defaultContentCheckedList
-  );
+  const [isClient, setIsClient] = useState(false);
 
   const [commandName, setCommandName] = useState("");
   const [assistantId, setAssistantId] = useState("");
   const [threadId, setThreadId] = useState("");
   const [commandsContent, setCommandsContent] = useState("");
-
-  const [isKeypress, setIsKeypress] = useState<boolean>(false);
-
-  const checkIdeasAll = ideas.length === checkedIdeasList.length;
-  const indeterminateIdeas =
-    checkedIdeasList.length > 0 && checkedIdeasList.length < ideas.length;
-  const checkContextAll = context.length === checkedContextList.length;
-  const indeterminateContext =
-    checkedContextList.length > 0 && checkedContextList.length < context.length;
-  const checkContentAll = content.length === checkedContentList.length;
-  const indeterminateContent =
-    checkedContentList.length > 0 && checkedContentList.length < content.length;
 
   const handleOnChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
@@ -106,18 +66,6 @@ export default function Command({
       detail: { value },
     });
     window.dispatchEvent(customEvent);
-  };
-
-  const onCheckIdeasAllChange: CheckboxProps["onChange"] = (e) => {
-    setCheckedIdeasList(e.target.checked ? ideas : []);
-  };
-
-  const onCheckContextAllChange: CheckboxProps["onChange"] = (e) => {
-    setCheckedContextList(e.target.checked ? context : []);
-  };
-
-  const onCheckContentAllChange: CheckboxProps["onChange"] = (e) => {
-    setCheckedContentList(e.target.checked ? content : []);
   };
 
   const handleChange = (value: string) => {
@@ -137,9 +85,9 @@ export default function Command({
         assistantId,
         newthreadId,
         selectedValue,
-        checkedIdeasList,
-        checkedContextList,
-        checkedContentList,
+        idea,
+        content,
+        context,
         commandsContent,
         id
       );
@@ -153,9 +101,9 @@ export default function Command({
         assistantId,
         threadId,
         selectedValue,
-        checkedIdeasList,
-        checkedContextList,
-        checkedContentList,
+        idea,
+        content,
+        context,
         commandsContent,
         id
       );
@@ -166,10 +114,10 @@ export default function Command({
     threadId,
     commandsContent,
     selectedValue,
-    checkedIdeasList,
-    checkedContextList,
-    checkedContentList,
     isClient,
+    idea,
+    content,
+    context,
   ]);
 
   useEffect(() => {
@@ -180,13 +128,9 @@ export default function Command({
       const defaultThreadID = getDefaultThreadId();
 
       if (storedRequest) {
-        setCheckedIdeasList(storedRequest.ideas || defaultIdeasCheckedList);
-        setCheckedContextList(
-          storedRequest.context || defaultContextCheckedList
-        );
-        setCheckedContentList(
-          storedRequest.content || defaultContentCheckedList
-        );
+        setIdea(storedRequest.idea || [0, 0]);
+        setContent(storedRequest.content || [0, 0]);
+        setContext(storedRequest.context || [0, 0]);
         setCommandName(storedRequest.commandName || "");
         setAssistantId(
           storedRequest.assistantId
@@ -307,11 +251,8 @@ export default function Command({
                     setCommandName(e.target.value);
                     setIsClient(true);
                     handleOnChange(e);
-                    setIsKeypress(false);
                   }}
-                  onClick={() => {
-                    setIsKeypress(false);
-                  }}
+                  onClick={() => {}}
                 />
               </div>
             </div>
@@ -328,7 +269,6 @@ export default function Command({
                     setAssistantId(e.target.value);
                     setIsClient(true);
                     handleOnChange(e);
-                    setIsKeypress(false);
                   }}
                   onBlur={getThreadID}
                 />
@@ -347,11 +287,8 @@ export default function Command({
                     setThreadId(e.target.value);
                     setIsClient(true);
                     handleOnChange(e);
-                    setIsKeypress(false);
                   }}
-                  onClick={() => {
-                    setIsKeypress(false);
-                  }}
+                  onClick={() => {}}
                   onBlur={getThreadID}
                 />
               </div>
@@ -375,102 +312,120 @@ export default function Command({
             <Option value="Content">Create Content</Option>
             <Option value="Edit Node">Edit Node</Option>
           </Select>
-          <div className="w-[650px] grow border-black border-[1px] rounded-[5px] flex flex-col justify-between p-[30px] max-[1595px]:w-full overflow-scroll">
+          <div className="w-[650px] grow border-black border-[1px] rounded-[5px] flex flex-col justify-between px-[30px] py-[15px] max-[1595px]:w-full overflow-scroll">
             <div className="w-full flex max-[768px]:w-[432px]">
-              <div className="w-[31%] flex items-center justify-center"></div>
-              <div className="w-[23%] flex items-center justify-center">
-                <h1>Brother</h1>
+              <div className="w-[36%] flex items-center justify-center"></div>
+              <div className="w-[32%] flex items-center justify-center">
+                <h1>Head Level</h1>
               </div>
-              <div className="w-[23%] flex items.center justify-center">
-                <h1>Parent</h1>
-              </div>
-              <div className="w-[23%] flex items.center justify-center">
-                <h1>All</h1>
+              <div className="w-[32%] flex items.center justify-center">
+                <h1>Depth</h1>
               </div>
             </div>
             <div className="w-full flex max-[768px]:w-[432px]">
-              <div className="w-[31%] flex items.center justify.center">
+              <div className="w-[36%] flex items.center justify.center">
                 <h1>Ideas</h1>
               </div>
-              {ideas.map((option) => (
-                <Checkbox
-                  key={option}
-                  value={option}
-                  checked={checkedIdeasList.includes(option)}
-                  onChange={() => {
-                    const newList = checkedIdeasList.includes(option)
-                      ? checkedIdeasList.filter((item) => item !== option)
-                      : [...checkedIdeasList, option];
-                    setCheckedIdeasList(newList);
+              <div className="w-[32%] flex items.center justify-center px-[20px]">
+                <InputNumber
+                  min={0}
+                  onChange={(value) => {
+                    setIdea((prev) => {
+                      const updated = [...prev];
+                      updated[0] = value ?? 0;
+                      return updated;
+                    });
                     setIsClient(true);
                   }}
-                  className="w-[23%] flex justify-center items-center"
+                  value={idea[0]}
                   disabled={isEditing}
                 />
-              ))}
-              <Checkbox
-                indeterminate={indeterminateIdeas}
-                onChange={onCheckIdeasAllChange}
-                checked={checkIdeasAll}
-                disabled={isEditing}
-                className="w-[23%] flex justify-center items-center"
-              />
+              </div>
+              <div className="w-[32%] flex items.center justify-center px-[20px]">
+                <InputNumber
+                  min={0}
+                  onChange={(value) => {
+                    setIdea((prev) => {
+                      const updated = [...prev];
+                      updated[1] = value ?? 0;
+                      return updated;
+                    });
+                    setIsClient(true);
+                  }}
+                  value={idea[1]}
+                  disabled={isEditing}
+                />
+              </div>
             </div>
             <div className="w-full flex max-[768px]:w-[432px]">
-              <div className="w-[31%] flex items.center justify.center">
+              <div className="w-[36%] flex items.center justify.center">
                 <h1>Context</h1>
               </div>
-              {context.map((option) => (
-                <Checkbox
-                  key={option}
-                  value={option}
-                  checked={checkedContextList.includes(option)}
-                  onChange={() => {
-                    const newList = checkedContextList.includes(option)
-                      ? checkedContextList.filter((item) => item !== option)
-                      : [...checkedContextList, option];
-                    setCheckedContextList(newList);
+              <div className="w-[32%] flex items.center justify-center px-[20px]">
+                <InputNumber
+                  min={0}
+                  onChange={(value) => {
+                    setContext((prev) => {
+                      const updated = [...prev];
+                      updated[0] = value ?? 0;
+                      return updated;
+                    });
                     setIsClient(true);
                   }}
+                  value={context[0]}
                   disabled={isEditing}
-                  className="w-[23%] flex justify-center items-center"
                 />
-              ))}
-              <Checkbox
-                indeterminate={indeterminateContext}
-                disabled={isEditing}
-                onChange={onCheckContextAllChange}
-                checked={checkContextAll}
-                className="w-[23%] flex justify-center items-center"
-              />
+              </div>
+              <div className="w-[32%] flex items.center justify-center px-[20px]">
+                <InputNumber
+                  min={0}
+                  onChange={(value) => {
+                    setContext((prev) => {
+                      const updated = [...prev];
+                      updated[1] = value ?? 0;
+                      return updated;
+                    });
+                    setIsClient(true);
+                  }}
+                  value={context[1]}
+                  disabled={isEditing}
+                />
+              </div>
             </div>
             <div className="w-full flex max-[768px]:w-[432px]">
-              <div className="w-[31%] flex items.center justify.center">
+              <div className="w-[36%] flex items.center justify.center">
                 <h1>Content</h1>
               </div>
-              {content.map((option) => (
-                <Checkbox
-                  key={option}
-                  value={option}
-                  checked={checkedContentList.includes(option)}
-                  onChange={() => {
-                    const newList = checkedContentList.includes(option)
-                      ? checkedContentList.filter((item) => item !== option)
-                      : [...checkedContentList, option];
-                    setCheckedContentList(newList);
+              <div className="w-[32%] flex items.center justify-center px-[20px]">
+                <InputNumber
+                  min={0}
+                  onChange={(value) => {
+                    setContent((prev) => {
+                      const updated = [...prev];
+                      updated[0] = value ?? 0;
+                      return updated;
+                    });
                     setIsClient(true);
                   }}
+                  value={content[0]}
                   disabled={isEditing}
-                  className="w-[23%] flex justify-center items.center"
                 />
-              ))}
-              <Checkbox
-                indeterminate={indeterminateContent}
-                disabled={isEditing}
-                onChange={onCheckContentAllChange}
-                checked={checkContentAll}
-                className="w-[23%] flex justify-center items.center"
-              />
+              </div>
+              <div className="w-[32%] flex items.center justify-center px-[20px]">
+                <InputNumber
+                  min={0}
+                  onChange={(value) => {
+                    setContent((prev) => {
+                      const updated = [...prev];
+                      updated[1] = value ?? 0;
+                      return updated;
+                    });
+                    setIsClient(true);
+                  }}
+                  value={content[1]}
+                  disabled={isEditing}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -483,13 +438,10 @@ export default function Command({
           onChange={(e) => {
             setCommandsContent(e.target.value);
             setIsClient(true);
-            setIsKeypress(false);
           }}
           value={commandsContent}
           disabled={isEditing}
-          onClick={() => {
-            setIsKeypress(false);
-          }}
+          onClick={() => {}}
         />
       </div>
       <div className="w-full flex justify-end relative">

@@ -6,11 +6,7 @@ export interface Node {
   type: string;
 }
 
-export interface checkState {
-  context: boolean;
-  content: boolean;
-  idea: boolean;
-}
+
 
 export interface Commands {
   commandName: string;
@@ -18,9 +14,9 @@ export interface Commands {
   threadId: string;
   commands: string;
   select: string;
-  brothers: checkState;
-  parent: checkState;
-  all: checkState;
+  idea: number[];
+  content: number[];
+  context: number[];
   commandKey: string;
 }
 
@@ -30,9 +26,9 @@ export interface ReturnCommand {
   threadId: string;
   commands: string;
   select: string;
-  ideas: string[];
-  context: string[];
-  content: string[];
+  idea: number[];
+  context: number[];
+  content: number[];
   commandKey: string;
 }
 

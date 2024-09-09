@@ -14,7 +14,6 @@ export default function CommandsGroup() {
   const [isClient, setIsClient] = useState<boolean>(false);
 
   const [commands, setCommands] = useState<Commands[]>([]);
-  const [allShortcuts, setAllShortcuts] = useState<string[]>([]);
 
   const [editingCommandId, setEditingCommandId] = useState<number | null>(null);
   const [edit, setEdit] = useState<boolean>(true);
@@ -42,18 +41,12 @@ export default function CommandsGroup() {
       setDefaultAssistantId(data[0].configuration.defaultAssistantId);
       setDefaultThreadId(data[0].configuration.defaultThreadId);
       setCommands(data[0].configuration.commands);
-      setAllShortcuts(
-        data[0].configuration.commands
-          .map((cmd: any) => cmd.commandShortcut)
-          .filter((shortcut: string) => shortcut !== "")
-      );
     } else {
       // Clear the state if there is no data
       setOpenAIKey("");
       setDefaultAssistantId("");
       setDefaultThreadId("");
       setCommands([]);
-      setAllShortcuts([]);
     }
   };
 
@@ -136,14 +129,6 @@ export default function CommandsGroup() {
     setIsClient(true);
   };
 
-  const updateShortcuts = (shortcut: string, id: number) => {
-    setAllShortcuts((prevShortcuts) => {
-      const updatedShortcuts = [...prevShortcuts];
-      updatedShortcuts[id] = shortcut;
-      return updatedShortcuts;
-    });
-  };
-
   return (
     <div className="w-full flex flex-col gap-[30px]">
       <div className="flex flex-col gap-[20px]">
@@ -206,8 +191,6 @@ export default function CommandsGroup() {
                   onEdit={handleEdit}
                   onApply={handleApply}
                   isEditing={editingCommandId != index}
-                  allShortcuts={allShortcuts}
-                  updateShortcuts={updateShortcuts}
                 />
               </div>
             </Reorder.Item>
@@ -223,8 +206,6 @@ export default function CommandsGroup() {
               onEdit={handleEdit}
               onApply={handleApply}
               isEditing={editingCommandId != index}
-              allShortcuts={allShortcuts}
-              updateShortcuts={updateShortcuts}
             />
           ))}
         </div>
