@@ -122,6 +122,7 @@ const jsonToXML = (mindMap: Node[]): string => {
     }
 
     const children = mindMap.filter((n) => n.parentid === node.id);
+
     const childrenXML = children.map(getNodeXML).join("");
     includedNodeIds.add(node.id);
 
@@ -129,7 +130,47 @@ const jsonToXML = (mindMap: Node[]): string => {
       } BACKGROUND_COLOR="${backgroundColor}">${childrenXML}</node>`;
   };
 
-  const rootNode = mindMap.find((n) => n.isroot);
+  const rootNode = mindMap.find((n) => n.isroot) || mindMap[0];
+  let xmlString = `<map version="1.0.1">\n<!-- To view this file, download free mind mapping software FreeMind from http://freemind.sourceforge.net -->\n`;
+
+  if (rootNode) {
+    xmlString += `${getNodeXML(rootNode)}\n`;
+  } else {
+    mindMap.forEach((node) => {
+      if (!includedNodeIds.has(node.id)) {
+        xmlString += `${getNodeXML(node)}\n`;
+      }
+    });
+  }
+
+  xmlString += `</map>`;
+  return xmlString;
+};
+
+const jsonToXMLFiltering = (mindMap: any[]): string => {
+  const includedNodeIds = new Set<string>();
+
+  const getNodeXML = (node: any): string => {
+    let backgroundColor = "";
+
+    if (node.data.type === "Idea") {
+      backgroundColor = "#008000"; // Green
+    } else if (node.data.type === "Context") {
+      backgroundColor = "#808080"; // Grey
+    } else if (node.data.type === "Content") {
+      backgroundColor = "#FFFFFF"; // White
+    }
+
+    const children = mindMap.filter((n) => n.parent?.id === node.id);
+
+    const childrenXML = children.map(getNodeXML).join("");
+    includedNodeIds.add(node.id);
+
+    return `<node ID="${node.id}" TEXT="${node.topic}"${node.isroot ? ' ROOT="true"' : ""
+      } BACKGROUND_COLOR="${backgroundColor}">${childrenXML}</node>`;
+  };
+
+  const rootNode = mindMap.find((n) => n.isroot) || mindMap[0];
   let xmlString = `<map version="1.0.1">\n<!-- To view this file, download free mind mapping software FreeMind from http://freemind.sourceforge.net -->\n`;
 
   if (rootNode) {
@@ -770,8 +811,6 @@ const useMindMapStore = create<MindMapState>((set) => ({
     nodeType: string,
     cancelToken: any
   ) => {
-    console.log(node);
-
     const mindMapData = localStorage.getItem("mindMapData");
 
     if (mindMapData) {
@@ -784,10 +823,6 @@ const useMindMapStore = create<MindMapState>((set) => ({
 
       try {
         const currentCommand: Commands = data[0].configuration.commands[key];
-
-        console.log(currentCommand);
-
-        console.log(defaultAssistantId);
 
         let headLevel = 0
         let depth = 0
@@ -805,41 +840,18 @@ const useMindMapStore = create<MindMapState>((set) => ({
 
         let promptNodes: any[] = [];
 
-        console.log(node);
-
         if (node.id === "root") {
           promptNodes.push(createNodeData(node));
         }
         else {
-          const addSubNodes = (currentNode: any, levelsNumber: number) => {
-            promptNodes.push(createNodeData(currentNode));
-
-            if (currentNode.children && currentNode.children.length > 0) {
-              currentNode.children.forEach((child: any) => {
-                if (child.data.type === currentNode.data.type && child.id != currentNode.id) {
-                  const number = levelsNumber - 1;
-                  if (number <= 0) {
-                    return;
-                  }
-                  else {
-                    addSubNodes(child, number);
-                  }
-                }
-              });
-            }
-          };
-
           const findRootNode = (currentNode: any, level: number) => {
             let rootNode = currentNode
 
             while (level) {
-              console.log(level);
-
               if (rootNode.data.type == 'root' && level > 0) {
                 return;
               } else {
                 rootNode = rootNode.parent;
-                console.log(rootNode);
               }
               level = level - 1;
             }
@@ -896,7 +908,7 @@ const useMindMapStore = create<MindMapState>((set) => ({
 
         console.log(promptNodes, "This is mindmap array data and it is include selected node and parent or brother nodes if they are seleted.");
 
-        const xmlData = jsonToXML(promptNodes);
+        const xmlData = jsonToXMLFiltering(promptNodes);
 
         console.log(xmlData, "This is mindmap xml data and it is include selected node and parent or brother nodes if they are seleted.");
 
@@ -1024,9 +1036,7 @@ const useMindMapStore = create<MindMapState>((set) => ({
         }
       } catch (error: any) {
         if (axios.isCancel(error)) {
-          console.log("Request canceled", error.message);
         } else {
-          console.log(error);
           if (error.response.status) {
             const errorStatus = error.response.status;
             const event = new CustomEvent("errorOccurs", {
