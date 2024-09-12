@@ -829,14 +829,17 @@ const useMindMapStore = create<MindMapState>((set) => ({
 
         if (node.data.type.toLowerCase() == "idea") {
           headLevel = currentCommand.idea[0]
-          depth = currentCommand.idea[1]
+          depth = currentCommand.idea[1] - 1
         } else if (node.data.type.toLowerCase() == "content") {
           headLevel = currentCommand.content[0]
-          depth = currentCommand.content[1]
+          depth = currentCommand.content[1] - 1
         } else {
           headLevel = currentCommand.context[0]
-          depth = currentCommand.context[1]
+          depth = currentCommand.context[1] - 1
         }
+
+        console.log(depth);
+
 
         let promptNodes: any[] = [];
 
@@ -876,6 +879,8 @@ const useMindMapStore = create<MindMapState>((set) => ({
               node.children.forEach((child: any) => {
                 if (child.data.type === rootNodeType.data.type) {
                   nodes.push(child);
+                } else {
+                  return
                 }
                 nodes = nodes.concat(getNodesWithinDepth(child, maxDepth, currentDepth + 1));
               });
