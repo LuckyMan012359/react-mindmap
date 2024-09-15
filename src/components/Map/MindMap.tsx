@@ -170,8 +170,6 @@ const MindMap = () => {
       return;
     }
 
-    console.log(nodeType);
-
     if (!nodeType || nodeType === "" || nodeType === "Node type") {
       setShowLoading(false);
       message.error({

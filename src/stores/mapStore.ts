@@ -824,21 +824,17 @@ const useMindMapStore = create<MindMapState>((set) => ({
       try {
         const currentCommand: Commands = data[0].configuration.commands[key];
 
-        let headLevel = 0
-        let depth = 0
+        let ideaHeadLevel, ideaDepth, contextHeadLevel, contextDepth, contentHeadLevel, contentDepth
 
-        if (node.data.type.toLowerCase() == "idea") {
-          headLevel = currentCommand.idea[0]
-          depth = currentCommand.idea[1] - 1
-        } else if (node.data.type.toLowerCase() == "content") {
-          headLevel = currentCommand.content[0]
-          depth = currentCommand.content[1] - 1
-        } else {
-          headLevel = currentCommand.context[0]
-          depth = currentCommand.context[1] - 1
-        }
+        ideaHeadLevel = currentCommand.idea[0]
+        ideaDepth = currentCommand.idea[1] - 1
+        contextHeadLevel = currentCommand.context[0]
+        contextDepth = currentCommand.context[1] - 1
+        contentHeadLevel = currentCommand.content[0]
+        contentDepth = currentCommand.content[1] - 1
 
-        console.log(depth);
+        console.log(ideaHeadLevel, contextHeadLevel, contentHeadLevel);
+
 
 
         let promptNodes: any[] = [];
@@ -862,9 +858,7 @@ const useMindMapStore = create<MindMapState>((set) => ({
             return rootNode
           }
 
-          const rootNodeType = findRootNode(node, headLevel)
-
-          const getNodesWithinDepth = (node: any, maxDepth: number, currentDepth = 0) => {
+          const getNodesWithinDepth = (node: any, maxDepth: number, nodeType: string, currentDepth = 0) => {
             if (node == undefined) {
               return []
             }
@@ -877,39 +871,81 @@ const useMindMapStore = create<MindMapState>((set) => ({
 
             if (node.children && node.children.length > 0) {
               node.children.forEach((child: any) => {
-                if (child.data.type === rootNodeType.data.type) {
+                if (child.data.type === nodeType) {
                   nodes.push(child);
                 } else {
                   return
                 }
-                nodes = nodes.concat(getNodesWithinDepth(child, maxDepth, currentDepth + 1));
+                nodes = nodes.concat(getNodesWithinDepth(child, maxDepth, nodeType, currentDepth + 1));
               });
             }
 
             return nodes;
           };
 
-          const rootNode = findRootNode(node, headLevel)
+          const removeDuplicates = (data: any[]) => {
+            const seenIds = new Set();
 
-          promptNodes = [...getNodesWithinDepth(rootNode, depth) || []];
-
-          if (rootNode) {
-            promptNodes.unshift(rootNode)
+            return data.filter(item => {
+              if (seenIds.has(item.id)) {
+                return false; // Duplicate found, skip it
+              } else {
+                seenIds.add(item.id);
+                return true; // Not a duplicate, keep it
+              }
+            });
           }
+
+          const ideaRootNode = findRootNode(node, ideaHeadLevel)
+          const contextRootNode = findRootNode(node, contextHeadLevel)
+          const contentRootNode = findRootNode(node, contentHeadLevel)
+
+          console.log(ideaRootNode, contextRootNode, contentRootNode);
+
+          if (!ideaRootNode || !contextRootNode || !contentRootNode) {
+            const nodeType = !ideaRootNode ? "Ideas" : !contextRootNode ? "Context" : "Content"
+
+            notification.error({
+              message: `Please check ${nodeType}'s Head Levels. This value is too big for selected node.`
+            })
+            window.dispatchEvent(new Event("projectChanged"));
+
+            const event = new CustomEvent("threadIdUpdated", {
+              detail: { key },
+            });
+            window.dispatchEvent(event);
+            return;
+          }
+
+          promptNodes = [...promptNodes, ...getNodesWithinDepth(ideaRootNode, ideaDepth, "Idea") || []];
+          promptNodes = [...promptNodes, ...getNodesWithinDepth(contextRootNode, contextDepth, "Context") || []];
+          promptNodes = [...promptNodes, ...getNodesWithinDepth(contentRootNode, contentDepth, "Content") || []];
+
+          if (ideaRootNode) {
+            promptNodes.unshift(ideaRootNode)
+          }
+
+          if (contextRootNode) {
+            promptNodes.unshift(contextRootNode)
+          }
+
+          if (contentRootNode) {
+            promptNodes.unshift(contentRootNode)
+          }
+
+          promptNodes = [...removeDuplicates(promptNodes)]
+
+          console.log(promptNodes);
         }
 
-        if (promptNodes.length == 0) {
-          notification.error({
-            message: "Please check Head Levels. This value is too big for selected node."
-          })
-          window.dispatchEvent(new Event("projectChanged"));
+        promptNodes.sort((a, b) => {
+          // Extract numeric part after '#' in id
+          const idA = parseInt(a.id.split('#')[1], 10);
+          const idB = parseInt(b.id.split('#')[1], 10);
 
-          const event = new CustomEvent("threadIdUpdated", {
-            detail: { key },
-          });
-          window.dispatchEvent(event);
-          return;
-        }
+          // Compare the numeric parts
+          return idA - idB;
+        });
 
         console.log(promptNodes, "This is mindmap array data and it is include selected node and parent or brother nodes if they are seleted.");
 

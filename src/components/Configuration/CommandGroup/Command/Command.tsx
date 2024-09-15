@@ -86,8 +86,8 @@ export default function Command({
         newthreadId,
         selectedValue,
         idea,
-        content,
         context,
+        content,
         commandsContent,
         id
       );
@@ -102,8 +102,8 @@ export default function Command({
         threadId,
         selectedValue,
         idea,
-        content,
         context,
+        content,
         commandsContent,
         id
       );
