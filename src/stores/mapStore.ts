@@ -873,8 +873,6 @@ const useMindMapStore = create<MindMapState>((set) => ({
               node.children.forEach((child: any) => {
                 if (child.data.type === nodeType) {
                   nodes.push(child);
-                } else {
-                  return
                 }
                 nodes = nodes.concat(getNodesWithinDepth(child, maxDepth, nodeType, currentDepth + 1));
               });
